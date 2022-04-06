@@ -1,0 +1,34 @@
+<nav class="navbar navbar-expand-lg navbar-custom" >
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+      <a class="navbar-brand" href="/">A mi cuidado</a>
+      <ul class="navbar-nav mr-auto mt-2 mt-lg-0 ml-4">
+        <li class="nav-item active">
+          <a class="nav-link" href="/"> <i class="fa fa-home" aria-hidden="true"></i>  Inicio </a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="/"> <i class="fa fa-user" aria-hidden="true"></i>  Perfil </a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="/vigilancia"> <i class="fa fa-video-camera" aria-hidden="true"></i>  Monitoreo </a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="/"> <i class="fa fa-medkit" aria-hidden="true"></i>  Medicamentos </a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="/"> <i class="fa fa-heartbeat" aria-hidden="true"></i>  Historial </a>
+        </li>
+        
+      </ul>
+      <form class="form-inline my-2 my-lg-0">
+        <a class="btn btn-md my my-sm-0" href="/logout" style="background-color:#54448d;" > <i class="fa fa-sign-out" aria-hidden="true"></i>Log out </a>
+      </form>
+    </div>
+</nav>
+<div class="container-fluid pb-2 d-flex justify-content-between" style="background-color: #eee;"> 
+  <h1 class="h2">Hola,{{session['nombre']}}</h1>
+  <p class="h4"> <span class="font-weight-bold">Cuenta:</span>{{session['email']}}</p> 
+</div>
+

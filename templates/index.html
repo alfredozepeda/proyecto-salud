@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{%block title %} Inicio  {% endblock title %}
+{% block body %}
+{% include "navbar.html" %}
+
+<div class="row my-2 mx-2">
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fa fa-user" style="font-size: 60px" aria-hidden="true"></i> </h5>
+        <h3 class="text-center"> PERFIL </h3>
+        <p class="card-text">En esta sección se muestran y se visualizan los datos principales del paciente con opción de modificarlos </p>
+        <a href="#" class="btn btn-primary">Ver sección</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fa fa-video-camera" style="font-size: 60px" aria-hidden="true"></i> </h5>
+        <h3 class="text-center"> VIDEOVIGILANCIA </h3>
+        <p class="card-text">En esta sección se puede realizar un monitoreo por medio de la cámara al paciente </p>
+        <a href="/vigilancia" class="btn btn-primary">Ver sección</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row my-4 mx-2">
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fa fa-medkit" style="font-size: 60px" aria-hidden="true"></i> </h5>
+        <h3 class="text-center"> MEDICAMENTOS </h3>
+        <span class="badge badge-danger">
+          Medicamentos pendientes de surtir <span class="badge badge-light">1 dia restante</span>
+        </span>
+        <p class="card-text">En esta sección se genera el inventario y programación de medicamentos del paciente  <br> 
+       </p>
+        <a href="#" class="btn btn-primary">Ver sección</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fa fa-heartbeat" style="font-size: 60px" aria-hidden="true"></i> </h5>
+        <h3 class="text-center"> HISTORIAL CLÍNICO </h3>
+        <p class="card-text"> En esta sección se visualiza la información del historial de la toma de medicamentos y de signos de salud</p>
+        <a href="#" class="btn btn-primary">Ver sección</a>
+      </div>
+    </div>
+  </div>
+</div>
+<img src="{{ url_for('video_feed') }}">
+
+
+
+{% endblock body %}

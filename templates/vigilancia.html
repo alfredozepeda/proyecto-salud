@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{%block title %} Inicio  {% endblock title %}
+{% block body %}
+{% include "navbar.html" %}
+
+<div class="row w-100 justify-content-center"> 
+    <h1 class="display-2"> Monitoreo </h1>
+</div>
+
+{% if not activado %}
+<div class="row justify-content-center w-100 mb-1"> 
+    <form method="post" action="/vigilancia">
+        <input type="submit"   value="up" name="Movimiento" />
+    </form>
+</div>
+{% endif %}
+
+<div class="row w-100 justify-content-center">
+        {% if not activado %}
+            <form method="post" action="/vigilancia" class="my-4 mx-2">
+                <input type="submit"   value="left" name="Movimiento" />
+            </form>
+        {% endif %}
+        <img  src="{{ url_for('video_feed') }}">
+        {% if not activado %}
+        <form method="post" action="/vigilancia" class="my-4 mx-2">
+            <input type="submit"   value="right" name="Movimiento" />
+        </form>
+        {% endif %}  
+</div>
+
+{% if not activado %}
+<div class="row justify-content-center w-100 mt-1"> 
+    <form method="post" action="/vigilancia">
+        <input type="submit"   value="down" name="Movimiento" />
+    </form>
+</div>
+{% endif %}
+
+<form method="post" action="/vigilancia">
+    <p class="display-4  w-100"> Seguimiento de rostro: 
+        {% if activado %}
+        <span> <b> Activado </b>  </span>
+        {%  else %}
+        <span> <b> Desactivado </b></span>
+        {% endif %}
+    </p>
+    <div class="row w-100 justify-content-center">
+        <input type="submit"   value="facetrack" name="Seguimiento" /> 
+    </div>
+</form>
+
+
+
+{% endblock body %}

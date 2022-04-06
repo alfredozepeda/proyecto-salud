@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{%block title %} Registro {% endblock title %}
+{% block body %}
+<section class="ftco-section">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-6 text-center mb-5">
+          <h2 class="heading-section">Proyecto A mi cuidado</h2>
+        </div>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+          <div class="login-wrap p-4 p-md-5">
+            <div class="icon d-flex align-items-center justify-content-center">
+              <span class="fa fa-user-o"></span>
+            </div>
+            <h3 class="text-center mb-4">Registrate</h3>
+            <form action="/registro" class="login-form" method="POST">
+              <div class="form-group">
+                  <input type="email" id="email" name="email" autocomplete="off" class="form-control rounded-left" placeholder="Correo electronico" required>
+               </div>
+              <div class="form-group">
+                  <input type="text" id="paciente" name="paciente" autocomplete="off" class="form-control rounded-left" placeholder="Nombre paciente" required>
+              </div>
+              <div class="form-group d-flex">
+                <input type="password" id="password" name="password" class="form-control rounded-left" placeholder="Password" required>
+              </div>
+              <div class="form-group d-md-flex justify-content-center">
+                <div class="w-100 text-center">
+                  <a href="{{url_for('login')}}">Login</a>
+                </div>
+              </div>
+              {% if error == 1 %}
+              {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <ul>
+                      {% for message in messages %}
+                      <li> {{ message }} </li> 
+                      {% endfor %}
+                    </ul>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                {% endif %}
+              {% endwith %}
+              {% endif %}
+              {% if error == 0 %}
+              <div class="alert alert-success" role="alert">
+                <h4 class="alert-heading">Registro exitoso</h4>
+                <p>El registro del usuario se ha realizado con exito </p>
+                <hr>
+                <p class="mb-0">Por favor inicia sesión haciendo click en el siguiente enlace:  <a href="/login"> Iniciar sesión </a></p>
+              </div>
+                  
+              {% endif %} 
+             
+              <div class="form-group">
+                <button type="submit" class="btn btn-primary rounded submit p-3 px-5">Registrarse </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock body %}
