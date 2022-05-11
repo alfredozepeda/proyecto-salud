@@ -1,7 +1,9 @@
-from pickle import FALSE
+from urllib import response
 from flask import Flask, jsonify, render_template, redirect, request, url_for, session, flash, Response
 from flask_mysqldb import MySQL, MySQLdb
 from flask_mqtt import Mqtt
+from flask_cors import CORS
+import requests
 import cv2, imutils, os
 import json
 import numpy as np
@@ -23,6 +25,7 @@ app.config['MQTT_REFRESH_TIME'] = 1.0  # refresh time in seconds
 
 mqtt = Mqtt(app)
 mysql = MySQL(app)
+CORS(app)
 
 #Variables de captura de video
 global video 
@@ -38,8 +41,9 @@ face_detector = cv2.CascadeClassifier(cv2.data.haarcascades+"haarcascade_frontal
 def antes_de_cada_peticion():
     ruta = request.path
     # Si no ha iniciado sesión y quiere ir a alguna ruta protegida, lo redireccionamos al login
-    if not 'id_user' in session and ruta != "/login" and ruta != "/registro" and ruta != "/logout" and not ruta.startswith("/static"):
-        return redirect("/login")
+    if not ruta.startswith("/vermedi"):
+        if not 'id_user' in session and ruta != "/login" and ruta != "/registro" and ruta != "/logout" and not ruta.startswith("/static"):
+            return redirect("/login")
     # Bloquea ruta de login y registro si existe una sesion activa
     if  ruta == "/login" or ruta == "/registro":
       if 'id_user' in session:
@@ -58,14 +62,6 @@ def obtenUsuario(email):
      results = cur.fetchone()
      return results
 # Rutas
-#Si hay login
-@app.route('/get', methods = ["GET"])
-def get():
-    if 'id_user' in session:
-        print(request.data)
-        return 'si entra'
-    else:
-        return 'error'
 # Ruta de Index
 @app.route("/")
 def index():
@@ -253,6 +249,7 @@ def deteccion (facerec, nombre):
 #Ruta de perfil 
 @app.route("/perfil", methods=["POST", "GET"])
 def perfil():
+    video.release()
     nombreFile = 'rostro-'+str(session['id_user']) + '.jpg'
     if ValidaRostro(session['id_user']):
         existe = 'si'
@@ -310,6 +307,69 @@ def Entrenar(idUser):
     face_recognizer = cv2.face.LBPHFaceRecognizer_create()
     face_recognizer.train(faceData, np.array(labels))
     face_recognizer.write(personaTrainerPath + 'modeloLBPHFace-'+str(idUser) +'.xml')
+
+#Ruta de perfil 
+@app.route("/medicamentos", methods=["POST", "GET"])
+def medicamentos():
+    video.release()
+    if request.method ==  'GET':
+        url = 'http://127.0.0.1:5000/vermedicamentos/' + str(session['id_user'])
+        info = requests.get(url)
+        info = json.loads(info.text)
+        error = 2
+        return render_template('medicamentos.html', contenedores = info)
+    else: 
+            error = 2
+            medicamento = request.form['nombreMedicamento']
+            cantidadInventario = request.form['cantidadInventario']
+            cantidadDespacho = request.form['cantidadDespacho']
+            cadaHora  = request.form['cadaHora']
+            motor = request.form['motor']
+            dtime  = request.form['dtime']
+            if not medicamento:
+                flash('Registra un medicamento')
+                error = 1
+            elif not cantidadInventario:
+                flash('Registra una cantidad de inventario')
+                error = 1
+            elif not cantidadDespacho:
+                flash('Registra una cantidad de despacho')
+                error = 1
+            elif not cadaHora:
+                flash('Registra cada cuanto se realiza la medicacion')
+                error = 1
+            elif not motor:
+                flash('Selecciona un motor correcto')
+                error = 1
+            elif not dtime:
+                flash('Registra una fecha correcta')
+                error = 1
+            if error == 2:
+                    #Funcion insertar contenedor insertaUsuario(email,name,hash_password)
+                    cur = mysql.connection.cursor()
+                    cur.execute("INSERT INTO tblcontenedores (idpaciente,nombremedicina,inventario,despacho,horas,motor,dtime) VALUES (%s,%s,%s,%s,%s,%s,%s)",(session['id_user'], medicamento, cantidadInventario, cantidadDespacho, cadaHora, motor, dtime))
+                    mysql.connection.commit()
+                    error = 0
+                    return redirect(url_for('medicamentos'))
+            if error== 1:
+                    info = requests.get('http://127.0.0.1:5000/vermedicamentos/' + str(session['id_user']))
+                    return render_template('medicamentos.html', error=error, contenedores = info)
+
+#API's 
+@app.route("/vermedicamentos/<id>", methods=["GET"])
+def vermedicamentos(id):
+    try:
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT * FROM tblcontenedores WHERE idpaciente=%s",(id,))
+        mysql.connection.commit()
+        results = cur.fetchall()
+        resp = jsonify(results)
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
+
 
 if __name__=="__main__":
     app.run(debug=False)

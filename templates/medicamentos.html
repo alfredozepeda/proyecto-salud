@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{%block title %} Medicamentos {% endblock title %}
+{% block body %}
+{% include "navbar.html" %}
+<div class="row my-2 mx-2 justify-content-start">
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crea-contenedor">
+    Crear contenedor 
+</button> 
+</div>  
+{% if error == 1 %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+  <div class="row w-100 justify-content-center my-4"> 
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <ul>
+        {% for message in messages %}
+        <li> {{ message }} </li> 
+        {% endfor %}
+      </ul>
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+   </div> 
+  {% endif %}
+{% endwith %}
+{% endif %}
+
+{% for contenedor in contenedores %}
+<div class="row featurette">
+    <div class="col-md-7">
+        <h3>{{contenedor.idcontenedor}}</h3>
+        <p>
+            {{contenedor.nombremedicina}}
+        </p>
+    </div>
+</div>
+<hr class="featurette-divider">
+ {% endfor %}
+
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="crea-contenedor" tabindex="-1" role="dialog" aria-labelledby="crea-contenedor" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="title-crea-contenedor">Crear contenedor</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+            <form action="/medicamentos" method="POST">
+                <div class="form-group">
+                  <label for="nombreMedicamento">Nombre medicamento: </label>
+                  <input type="text" class="form-control" name="nombreMedicamento" id="nombreMedicamento"  placeholder="Nombre medicamento" value="{{ request.form['nombreMedicamento'] }}">
+                </div>
+                <div class="form-group">
+                  <label for="cantidadInventario">Cantidad de inventario: </label>
+                  <input type="number" class="form-control" id="cantidadInventario" name="cantidadInventario" placeholder="0" value="{{ request.form['cantidadInventario'] }}">
+                </div>
+                <div class="form-group">
+                    <label for="cantidadDespacho">Cantidad de pastillas a despachar:  </label>
+                    <input type="number" class="form-control" id="cantidadDespacho" name="cantidadDespacho" placeholder="1" value="{{ request.form['cantidadDespacho'] }}">
+                  </div>
+                <div class="form-group">
+                    <label for="cadaHora">Despachar medicamento cada:   (horas)</label>
+                    <input type="number" class="form-control" id="cadaHora" placeholder="8" value="{{ request.form['cadaHora'] }}" name="cadaHora" /> 
+                </div>
+                <div class="form-group">     
+                    <label for="motor">Seleccionar motor:  </label>
+                    <select class="form-control" id="motor" name="motor">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dtime">Fecha y hora proximo medicamento: </label>
+                    <input type="datetime-local" class="form-control" id="dtime"  name="dtime" value="{{ request.form['ddtime'] }}"/> 
+                </div>                  
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary rounded submit p-3 px-5"> Crear contenedor </button>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>    
+
+{% endblock body %}
