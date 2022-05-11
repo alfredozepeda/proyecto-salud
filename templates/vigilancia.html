@@ -22,14 +22,14 @@
             </form>
         {% endif %}
         <img  src="{{ url_for('video_feed') }}">
-        {% if not activado %}
+        {% if not activado  %}
         <form method="post" action="/vigilancia" class="my-4 mx-2">
             <input type="submit"   value="right" name="Movimiento" />
         </form>
         {% endif %}  
 </div>
 
-{% if not activado %}
+{% if not activado  %}
 <div class="row justify-content-center w-100 mt-1"> 
     <form method="post" action="/vigilancia">
         <input type="submit"   value="down" name="Movimiento" />
@@ -37,6 +37,7 @@
 </div>
 {% endif %}
 
+{%if existe=="si"%}
 <form method="post" action="/vigilancia">
     <p class="display-4  w-100"> Seguimiento de rostro: 
         {% if activado %}
@@ -49,7 +50,7 @@
         <input type="submit"   value="facetrack" name="Seguimiento" /> 
     </div>
 </form>
-
+{%endif%}
 
 
 {% endblock body %}

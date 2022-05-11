@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{%block title %} Inicio  {% endblock title %}
+{% block body %}
+{% include "navbar.html" %}
+<div class="row my-2 mx-2">
+    <div class="row justify-content-center w-100 my-4">
+            {% if existe == "si" %}
+                <img src="{{url_for('static',filename=nombreFile)}}" class="rounded float-left" alt="imagen de perfil" width="150" height="150">
+            {% else %}
+                <img src="{{url_for('static',filename='blank-profile.png')}}" class="rounded float-left" alt="imagen de perfil" width="150" height="150">
+            {% endif %} 
+    </div>
+    <div class="row justify-content-center w-100 my-2"> 
+        <form method="post" action="/perfil">
+            <input type="submit"  class="btn btn-lg btn-success my-2" value="Registrar rostro" name="Asignar rostro" />
+        </form>
+    </div>
+</div>
+{% endblock body %}
