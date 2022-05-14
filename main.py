@@ -41,7 +41,7 @@ face_detector = cv2.CascadeClassifier(cv2.data.haarcascades+"haarcascade_frontal
 def antes_de_cada_peticion():
     ruta = request.path
     # Si no ha iniciado sesión y quiere ir a alguna ruta protegida, lo redireccionamos al login
-    if not ruta.startswith("/vermedi"):
+    if not ruta.startswith("/API/"):
         if not 'id_user' in session and ruta != "/login" and ruta != "/registro" and ruta != "/logout" and not ruta.startswith("/static"):
             return redirect("/login")
     # Bloquea ruta de login y registro si existe una sesion activa
@@ -223,7 +223,7 @@ def deteccion (facerec, nombre):
                     rostro = auxFrame[y:y+h,x:x+w]
                     rostro = cv2.resize(rostro,(150,150), interpolation=cv2.INTER_CUBIC)
                     result = facerec.predict(rostro)
-                    if result[1] < 100:
+                    if result[1] < 80:
                         cv2.putText(frame,'{}'.format(nombre),(x,y-25),2,1.1,(0,255,0),1,cv2.LINE_AA)
                         faceX = int(x + (w / 2.0))
                         faceY = int(y + (h / 2.0))
@@ -312,12 +312,12 @@ def Entrenar(idUser):
 @app.route("/medicamentos", methods=["POST", "GET"])
 def medicamentos():
     video.release()
-    if request.method ==  'GET':
-        url = 'http://127.0.0.1:5000/vermedicamentos/' + str(session['id_user'])
+    url = 'http://192.168.68.103:5000/API/vermedicamentos/' + str(session['id_user'])
+    if request.method ==  'GET':   
         info = requests.get(url)
         info = json.loads(info.text)
         error = 2
-        return render_template('medicamentos.html', contenedores = info)
+        return render_template('medicamentos.html', contenedores = info, rows=0)
     else: 
             error = 2
             medicamento = request.form['nombreMedicamento']
@@ -345,22 +345,27 @@ def medicamentos():
                 flash('Registra una fecha correcta')
                 error = 1
             if error == 2:
-                    #Funcion insertar contenedor insertaUsuario(email,name,hash_password)
+                    #Funcion insertar contenedor 
                     cur = mysql.connection.cursor()
                     cur.execute("INSERT INTO tblcontenedores (idpaciente,nombremedicina,inventario,despacho,horas,motor,dtime) VALUES (%s,%s,%s,%s,%s,%s,%s)",(session['id_user'], medicamento, cantidadInventario, cantidadDespacho, cadaHora, motor, dtime))
                     mysql.connection.commit()
+                    mensaje = {"mensaje": "actualiza"}
+                    mensaje = json.dumps(mensaje)
+                    mqtt.publish('usuario/inventario', mensaje)
                     error = 0
                     return redirect(url_for('medicamentos'))
             if error== 1:
-                    info = requests.get('http://127.0.0.1:5000/vermedicamentos/' + str(session['id_user']))
-                    return render_template('medicamentos.html', error=error, contenedores = info)
+                    info = requests.get(url)
+                    info = json.loads(info.text)
+                    return render_template('medicamentos.html', error=error, contenedores = info, rows=0)
 
 #API's 
-@app.route("/vermedicamentos/<id>", methods=["GET"])
+#Ver todos los medicamentos 
+@app.route("/API/vermedicamentos/<id>", methods=["GET"])
 def vermedicamentos(id):
     try:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("SELECT * FROM tblcontenedores WHERE idpaciente=%s",(id,))
+        cur.execute("SELECT *  FROM tblcontenedores WHERE idpaciente=%s",(id,))
         mysql.connection.commit()
         results = cur.fetchall()
         resp = jsonify(results)
@@ -369,7 +374,74 @@ def vermedicamentos(id):
         print(e)
     finally:
         cur.close()
-
-
+# Ver medicamentos pendientes unicamente 
+@app.route("/API/vermedicamentospendientes/<id>", methods=["GET"])
+def vermedicamentospendientes(id):
+    try:
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT *, DAY(dtime) as dia, MONTH(dtime) as mes, YEAR(dtime) as anio, HOUR(dtime) as hora, MINUTE(dtime) as minuto  FROM tblcontenedores WHERE dtime is not null and  idpaciente=%s",(id,))
+        mysql.connection.commit()
+        results = cur.fetchall()
+        resp = jsonify(results)
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
+# Insertar despacho de medicamento 
+@app.route("/API/creadespacho", methods=["POST"])
+def creadespacho():
+    try:
+        datosJson = request.json
+        idpaciente = datosJson['idpaciente']
+        nombremedicina = datosJson['nombremedicina']
+        idcontenedor = datosJson['idcontenedor']
+        if idpaciente and nombremedicina  and idcontenedor and  request.method == 'POST':
+            cur = mysql.connection.cursor()
+            cur.execute("INSERT INTO tbldespacho (idpaciente,nombremedicina,horadespacho) VALUES (%s,%s, NOW())",(idpaciente,nombremedicina,))
+            mysql.connection.commit()
+            cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cur.execute("UPDATE tblcontenedores SET dtime = NULL,  inventario = inventario - despacho WHERE  idcontenedor=%s",(idcontenedor,))
+            mysql.connection.commit()
+            response = jsonify({'status': "ok"})
+            response.status_code = 200
+            return response
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
+# Tomo medicamento 
+@app.route("/API/tomamedicamento", methods=["PUT"])
+def tomamedicamento():
+    try:
+        datosJson = request.json
+        idpaciente = datosJson['idpaciente']
+        if idpaciente and  request.method == 'PUT':
+            cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cur.execute("UPDATE tblcontenedores SET  dtime = NOW() + INTERVAL horas HOUR WHERE dtime IS NULL AND idpaciente=%s",(idpaciente,))
+            mysql.connection.commit()
+            cur.execute("UPDATE tbldespacho SET  horatomada = NOW()  WHERE horatomada IS NULL AND idpaciente=%s",(idpaciente,))
+            mysql.connection.commit()
+            response = jsonify({'status': "ok"})
+            response.status_code = 200
+            return response
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
+# Mostrar despachos 
+@app.route("/API/vermedicamentospendientes/<id>", methods=["GET"])
+def vermedicamentospendientes(id):
+    try:
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT * FROM tbldespacho WHERE  idpaciente=%s",(id,))
+        mysql.connection.commit()
+        results = cur.fetchall()
+        resp = jsonify(results)
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
 if __name__=="__main__":
-    app.run(debug=False)
+    app.run(host='192.168.68.103', debug=False)

@@ -26,18 +26,33 @@
   {% endif %}
 {% endwith %}
 {% endif %}
-
 {% for contenedor in contenedores %}
-<div class="row featurette">
-    <div class="col-md-7">
-        <h3>{{contenedor.idcontenedor}}</h3>
-        <p>
-            {{contenedor.nombremedicina}}
-        </p>
+{% if loop.index % 2 != 0 %}
+<div class="row w-100 my-3" style="max-width:100%;"> 
+{% endif %}
+  <div class="col"> 
+    <div class="card mx-3 my-2">
+      <div class="card-header">
+        <b> <h6> # de Contenedor: {{loop.index}}  </h6> <span id="idcontenedor" style="display:none;"> {{ contenedor.idcontenedor}} </span></b>
+      </div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item"><b> Nombre medicamento: </b> {{contenedor.nombremedicina}}</li>
+          <li class="list-group-item"><b> Cantidad en inventario: </b> {% if contenedor.inventario >= contenedor.despacho %} {{contenedor.inventario}} {% endif %}
+            {% if contenedor.inventario < contenedor.despacho %}   <span class="badge badge-pill badge-danger"> SIN INVENTARIO  </span> {{contenedor.inventario}} {% endif %}</li>
+          <li class="list-group-item"><b> Cantidad a despachar: </b> {{contenedor.despacho}}</li>
+          <li class="list-group-item"><b> Hora despacho: </b> Despacha cada {{contenedor.horas}}  horas</li>
+          <li class="list-group-item"><b> Motor asignado: </b> {{contenedor.motor}}</li>
+          <li class="list-group-item"><b> PROXIMO DESPACHO: </b>{% if contenedor.dtime != None %} {{contenedor.dtime}} {% endif %}
+             {% if contenedor.dtime == None %}   <span class="badge badge-pill badge-danger"> TOMAR MEDICAMENTO AHORA </span> {% endif %}</li>
+        </ul>
+      </div>
     </div>
+  </div>
+{% if  loop.index % 2 == 0  %}
 </div>
-<hr class="featurette-divider">
- {% endfor %}
+{% endif %}
+{% endfor %}
 
 
 
@@ -75,6 +90,7 @@
                         <option>1</option>
                         <option>2</option>
                         <option>3</option>
+                        <option>4</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -92,5 +108,4 @@
       </div>
     </div>
   </div>    
-
 {% endblock body %}
