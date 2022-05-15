@@ -15,7 +15,7 @@ app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'sistema_salud'
 app.secret_key = "super secret key dsdssadadsa"
-app.config['MQTT_BROKER_URL'] = '192.168.68.103'
+app.config['MQTT_BROKER_URL'] = '192.168.68.110'
 app.config['MQTT_BROKER_PORT'] = 1883
 app.config['MQTT_USERNAME'] = None
 app.config['MQTT_PASSWORD'] = None
@@ -308,17 +308,17 @@ def Entrenar(idUser):
     face_recognizer.train(faceData, np.array(labels))
     face_recognizer.write(personaTrainerPath + 'modeloLBPHFace-'+str(idUser) +'.xml')
 
-#Ruta de perfil 
+#Ruta de programar medicamentos
 @app.route("/medicamentos", methods=["POST", "GET"])
 def medicamentos():
     video.release()
-    url = 'http://192.168.68.103:5000/API/vermedicamentos/' + str(session['id_user'])
+    url = 'http://192.168.68.110:5000/API/vermedicamentos/' + str(session['id_user'])
     if request.method ==  'GET':   
         info = requests.get(url)
         info = json.loads(info.text)
         error = 2
         return render_template('medicamentos.html', contenedores = info, rows=0)
-    else: 
+    if request.method == 'POST': 
             error = 2
             medicamento = request.form['nombreMedicamento']
             cantidadInventario = request.form['cantidadInventario']
@@ -358,6 +358,27 @@ def medicamentos():
                     info = requests.get(url)
                     info = json.loads(info.text)
                     return render_template('medicamentos.html', error=error, contenedores = info, rows=0)
+#Ruta de perfil 
+@app.route("/historial", methods=["POST", "GET"])
+def historial():
+    video.release()
+    if request.method ==  'GET':
+        url = 'http://192.168.68.110:5000/API/verdespachos/' + str(session['id_user'])   
+        info = requests.get(url)
+        info = json.loads(info.text)
+        url = 'http://192.168.68.110:5000/API/vermediciones/' + str(session['id_user'])   
+        info2 = requests.get(url)
+        info2 = json.loads(info2.text)
+        return render_template('historial.html', despachos = info, mediciones=info2)
+    else:
+         cur = mysql.connection.cursor()
+         cur.execute("INSERT INTO tblmediciones (idpaciente,fechasolicitud) VALUES (%s,NOW())",(session['id_user'],))
+         mysql.connection.commit()
+         cur.close()
+         mensaje = {"mensaje": "sensar"}
+         mensaje = json.dumps(mensaje)
+         mqtt.publish('usuario/ritmo', mensaje)
+         return redirect(url_for('historial'))
 
 #API's 
 #Ver todos los medicamentos 
@@ -379,7 +400,7 @@ def vermedicamentos(id):
 def vermedicamentospendientes(id):
     try:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("SELECT *, DAY(dtime) as dia, MONTH(dtime) as mes, YEAR(dtime) as anio, HOUR(dtime) as hora, MINUTE(dtime) as minuto  FROM tblcontenedores WHERE dtime is not null and  idpaciente=%s",(id,))
+        cur.execute("SELECT *, DAY(dtime) as dia, MONTH(dtime) as mes, YEAR(dtime) as anio, HOUR(dtime) as hora, MINUTE(dtime) as minuto  FROM tblcontenedores WHERE  idpaciente=%s",(id,))
         mysql.connection.commit()
         results = cur.fetchall()
         resp = jsonify(results)
@@ -430,11 +451,11 @@ def tomamedicamento():
     finally:
         cur.close()
 # Mostrar despachos 
-@app.route("/API/vermedicamentospendientes/<id>", methods=["GET"])
-def vermedicamentospendientes(id):
+@app.route("/API/verdespachos/<id>", methods=["GET"])
+def verdespachos(id):
     try:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("SELECT * FROM tbldespacho WHERE  idpaciente=%s",(id,))
+        cur.execute("SELECT *,CASE WHEN horatomada IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, horadespacho, horatomada) ELSE 0.01 END as diferencia FROM tbldespacho WHERE  idpaciente=%s ORDER BY iddespacho DESC",(id,))
         mysql.connection.commit()
         results = cur.fetchall()
         resp = jsonify(results)
@@ -443,5 +464,38 @@ def vermedicamentospendientes(id):
         print(e)
     finally:
         cur.close()
+# Mostrar mediciones 
+@app.route("/API/vermediciones/<id>", methods=["GET"])
+def vermediciones(id):
+    try:
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT * FROM tblmediciones  WHERE  idpaciente=%s ORDER BY idmedicion DESC",(id,))
+        mysql.connection.commit()
+        results = cur.fetchall()
+        resp = jsonify(results)
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
+# Registro mediciones de signos vitales
+@app.route("/API/registrasignos", methods=["PUT"])
+def registrasignos():
+    try:
+        datosJson = request.json
+        idpaciente = datosJson['idpaciente']
+        bfm = datosJson['totalbfm']
+        oxigenacion = datosJson['totaloxigenacion']
+        if idpaciente and  request.method == 'PUT':
+            cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cur.execute("UPDATE tblmediciones SET  dtime = NOW(), bfm = %s, oxigenacion = %s WHERE dtime IS NULL AND idpaciente=%s",(bfm,oxigenacion,idpaciente,))
+            mysql.connection.commit()
+            response = jsonify({'status': "ok"})
+            response.status_code = 200
+            return response
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
 if __name__=="__main__":
-    app.run(host='192.168.68.103', debug=False)
+    app.run(host='192.168.68.110', debug=False)

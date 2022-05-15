@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{%block title %} Historial medico {% endblock title %}
+{% block body %}
+{% include "navbar.html" %}
+
+<div class="row justify-content-center my-2 w-100"> <h2> Historial de despachos </h2></div>
+
+<table class="table">
+    <thead class="thead-dark">
+        <tr>
+          <th scope="col"># Despacho</th>
+          <th scope="col">Nombre medicina</th>
+          <th scope="col">Hora de despacho</th>
+          <th scope="col">Hora tomada </th>
+          <th scope="col">Diferencia de tiempo </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for despacho in despachos %}
+            <tr>
+                <th scope="row">{{ loop.index }}</th>
+                <td>{{ despacho.nombremedicina }} </td>
+                <td>{{ despacho.horadespacho }}</td>
+                <td>{% if despacho.horatomada == None %}
+                    <span class="badge badge-pill badge-danger"> Pendiente de tomar  </span>
+                    {% endif %}
+                    {% if despacho.horatomada != None %}
+                        {{ despacho.horatomada }}
+                    {% endif %}
+                </td>
+                <td>{% if despacho.diferencia == 0.01 %}
+                    <span class="badge badge-pill badge-danger"> Pendiente de tomar  </span>
+                    {% endif %}
+                    {% if despacho.diferencia != 0.01 %}
+                        {{ despacho.diferencia }} minutos
+                    {% endif %}
+                </td>
+            </tr>  
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="row justify-content-center my-2 w-100"> <h2> Historial de signos vitales </h2></div>
+
+{% if mediciones|length < 1 %}
+<div class="row w-100 justify-content-center"> 
+    <form action="/historial" method="POST">
+        <div class="form-group">
+            <button type="submit" class=" p-3 px-5"> Checar signos </button>
+        </div>
+    </form>
+</div>
+{% else %}
+{% if mediciones[0].dtime != None %}
+<div class="row w-100 justify-content-center"> 
+    <form action="/historial" method="POST">
+        <div class="form-group">
+            <button type="submit" class=" p-3 px-5"> Checar signos </button>
+        </div>
+    </form>
+</div>
+{% endif %}
+{% endif %}
+    <table class="table">
+        <thead class="thead-dark">
+            <tr>
+              <th scope="col"># ID Registro </th>
+              <th scope="col"> Fecha solicitud  </th>
+              <th scope="col"> BFM </th>
+              <th scope="col"> (%) Oxigenacion </th>
+              <th scope="col"> Hora de registro </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for medicion in mediciones %}
+                <tr>
+                    <th scope="row">{{ medicion.idmedicion }}</th>
+                    <td>{{ medicion.fechasolicitud }} </td>
+                    <td>{% if medicion.bfm == 0 %}
+                        <span class="badge badge-pill badge-danger"> Registrando datos  </span>
+                        {% endif %}
+                        {% if medicion.bfm != 0 %}
+                            {{ medicion.bfm }}
+                        {% endif %}
+                    </td>
+                    <td>{% if medicion.oxigenacion == 0 %}
+                        <span class="badge badge-pill badge-danger"> Registrando datos </span>
+                        {% endif %}
+                        {% if medicion.oxigenacion != 0 %}
+                            {{  medicion.oxigenacion }}  %
+                        {% endif %}
+                    </td>
+                    <td>{% if medicion.dtime == None %}
+                        <span class="badge badge-pill badge-danger"> Registrando datos </span>
+                        {% endif %}
+                        {% if medicion.dtime != None %}
+                            {{  medicion.dtime }}  
+                        {% endif %}
+                    </td>
+                </tr>  
+            {% endfor %}
+        </tbody>
+    </table>
+    
+
+
+{% endblock body %}
